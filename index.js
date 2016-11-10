@@ -1,12 +1,42 @@
+var fs = require('fs');
 var request = require('request');
+var config = require('./config');
 
-var url = "https://books.google.com/ngrams/graph?content=the%2Cand%2Cof&year_start=1800&year_end=2008&corpus=15&smoothing=4&share=&direct_url=t1%3B%2Cthe%3B%2Cc0%3B.t1%3B%2Cand%3B%2Cc0%3B.t1%3B%2Cof%3B%2Cc0";
+/*
+ * content=the,and,of
+ * year_start=1800
+ * year_end=2008
+ * corpus=15英文 23中文
+ */
+console.log('mission start');
+
+var url = "https://books.google.com/ngrams/graph?content=the&year_start=1800&year_end=2008&corpus=15";
+var qs = {
+    content: config.content,
+    year_start: 1800,
+    year_end: 2008,
+    corpus: config.corpus
+}
 
 request({
     'url': url,
-    'proxy': 'http://127.0.0.1:1080'
+    'qs': qs,
+    // 'proxy': 'http://127.0.0.1:1080'
 }, function(error, response, body){
-    var json_data = body.match(/var data = (\[[^;]*);/)[1].trim();
-    var data = JSON.parse(json_data);
-    console.log(data);
+    if (!error && response.statusCode == 200) {
+        var json_datas = body.match(/var data = (\[[^;]*);/)[1].trim();
+        var datas = JSON.parse(json_datas);
+        for (data of datas) {
+            fs.appendFileSync('temp.csv', data.ngram);
+            var year = 1800;
+            for (time of data.timeseries) {
+                fs.appendFileSync('temp.csv', ',' + year++);
+                fs.appendFileSync('temp.csv', ',' + time + '\n');
+            }
+        }
+        console.log('mission success');
+    } else {
+        console.log(error);
+        console.log('mission failed');
+    }
 });
