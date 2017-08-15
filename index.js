@@ -10,27 +10,30 @@ var config = require('./config');
  */
 console.log('mission start');
 
-var url = "https://books.google.com/ngrams/graph?content=the&year_start=1800&year_end=2008&corpus=15";
+var url = "https://books.google.com/ngrams/graph";
+
 var qs = {
     content: config.content,
     year_start: 1800,
     year_end: 2008,
-    corpus: config.corpus
+    corpus: config.corpus,
+    smoothing: 1
 }
 
 request({
     'url': url,
     'qs': qs,
-    // 'proxy': 'http://127.0.0.1:1080'
+    'proxy': 'http://127.0.0.1:1080'
 }, function(error, response, body){
     if (!error && response.statusCode == 200) {
         var json_datas = body.match(/var data = (\[[^;]*);/)[1].trim();
         var datas = JSON.parse(json_datas);
+		fs.appendFileSync('temp.csv', '\ufeff');
         for (data of datas) {
             fs.appendFileSync('temp.csv', data.ngram);
             var year = 1800;
             for (time of data.timeseries) {
-                fs.appendFileSync('temp.csv', ',' + year++);
+			fs.appendFileSync('temp.csv', ',' + year++);
                 fs.appendFileSync('temp.csv', ',' + time + '\n');
             }
         }
